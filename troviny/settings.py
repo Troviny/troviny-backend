@@ -28,7 +28,9 @@ SECRET_KEY = 'django-insecure-^yixhwrzs&5!5!bcmin3pd69no-94h@+^z-^8d=t605s(z*k@x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "troviny-backend-production.up.railway.app"
+]
 
 
 # Application definition
