@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,14 +96,10 @@ WSGI_APPLICATION = 'troviny.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'api',  # Match POSTGRES_DB
-        'USER': 'abdelrahman',  # Match POSTGRES_USER
-        'PASSWORD': 'abdelrahman123',  # Match POSTGRES_PASSWORD
-        'HOST': 'localhost',  # Use the Docker service name
-        'PORT': '5442',  # Internal PostgreSQL port in the container
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_PUBLIC_URL'),
+        conn_max_age=600,  # Keeps connection open for better performance
+    )
 }
 
 SWAGGER_SETTINGS = {
