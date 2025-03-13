@@ -27,9 +27,9 @@ auth_urls = [
 ]
 
 user_urls = [
-    path('user/', views.get_current_user_profile, name='get-user'),
-    path('user/single_profile/<int:user_id>/', views.get_single_user_profile, name='specific-user-profile'),
-    path('user/all_users', views.get_all_users, name='get-all-users'),
+    path('', views.get_current_user_profile, name='get-user'),  # ✅ Removed 'user/'
+    path('single_profile/<int:user_id>/', views.get_single_user_profile, name='specific-user-profile'),
+    path('all_users/', views.get_all_users, name='get-all-users'),  # ✅ Added trailing slash
 ]
 
 urlpatterns = [
@@ -37,9 +37,10 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('swagger.json/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
 
-    # Authentication URLs under 'auth/'
+    # Authentication URLs
     path('auth/', include((auth_urls, 'auth'))),  
 
-    # User URLs under 'user/'
+    # ✅ Include user URLs properly
     path('user/', include((user_urls, 'user'))),  
 ]
+
