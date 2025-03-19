@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, get_user_model
-from api.models import UserProfile
+from django.contrib.auth import get_user_model, authenticate
 
 User = get_user_model()
 
@@ -9,33 +7,18 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
-
-# UserProfile Serializer
-class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
-    class Meta:
-        model = UserProfile
-        fields = ["user", "phone_number", "address", "profile_picture", "country", "city", "role"]
+        fields = ["id", "username", "email", "phone_number", "address", "profile_picture", 
+                  "country", "city", "role", "is_active", "is_staff"]
 
 # Register Serializer
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
     email = serializers.EmailField(required=True)
 
-    # Additional UserProfile fields
-    phone_number = serializers.CharField(required=False, allow_blank=True)
-    address = serializers.CharField(required=False, allow_blank=True)
-    profile_picture = serializers.CharField(required=False, allow_blank=True)
-    country = serializers.CharField(required=False, allow_blank=True)
-    city = serializers.CharField(required=False, allow_blank=True)
-    role = serializers.CharField(required=False, allow_blank=True)
-
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "first_name", "last_name",
-                  "phone_number", "address", "profile_picture", "country", "city", "role"]
+        fields = ["id", "username", "email", "password", "phone_number", "address",
+                  "profile_picture", "country", "city", "role"]
 
     def validate_email(self, value):
         """Ensure email is unique"""
@@ -44,42 +27,25 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        """Create user and associate with UserProfile"""
-        profile_data = {
-            "phone_number": validated_data.pop("phone_number", None),
-            "address": validated_data.pop("address", None),
-            "profile_picture": validated_data.pop("profile_picture", None),
-            "country": validated_data.pop("country", None),
-            "city": validated_data.pop("city", None),
-            "role": validated_data.pop("role", None),
-        }
-
-        # Create the User
-        user = User.objects.create_user(**validated_data)
-
-        # Create the UserProfile and associate with the user
-        UserProfile.objects.create(user=user, **profile_data)
-
+        """Create user with hashed password"""
+        password = validated_data.pop("password")
+        user = User.objects.create_user(password=password, **validated_data)
         return user
 
+# Login Serializer
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        email = data.get("email")
+        username = data.get("username")
         password = data.get("password")
 
-        # Check if user exists
-        user = User.objects.filter(email=email).first()
-        if user is None:
-            raise serializers.ValidationError("User not found. Please register.")
-
-        # Authenticate using email instead of username
-        user = authenticate(username=user.email, password=password)
+        # Authenticate using username and password
+        user = authenticate(username=username, password=password)
 
         if user is None:
-            raise serializers.ValidationError("Invalid credentials. Please try again.")
+            raise serializers.ValidationError("Invalid username or password.")
 
         if not user.is_active:
             raise serializers.ValidationError("This account is inactive. Contact support.")

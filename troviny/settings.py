@@ -106,6 +106,8 @@ DATABASES = {
     )
 }
 
+AUTH_USER_MODEL = 'api.UserModel'
+
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
     'SECURITY_DEFINITIONS': {

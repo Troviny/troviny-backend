@@ -1,24 +1,33 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserModel  # Ensure this matches your actual import path
 
-# Define an inline admin descriptor for UserProfile model
-class UserProfileInline(admin.StackedInline):
-    model = UserProfile
-    can_delete = False
-    verbose_name_plural = "Additional Info"
-    fk_name = "user"
-
-# Extend the default UserAdmin to include UserProfile fields
+# Extend the default UserAdmin to include custom fields
 class CustomUserAdmin(UserAdmin):
-    inlines = [UserProfileInline]
+    model = UserModel
 
-    def get_inline_instances(self, request, obj=None):
-        if obj:
-            return [inline(self.model, self.admin_site) for inline in self.inlines]
-        return []
+    # Display these fields in the admin panel list view
+    list_display = ("id", "username", "email", "phone_number", "role", "is_active", "is_staff")
+    list_filter = ("is_active", "is_staff", "role", "country", "city")
 
-# Unregister default User model and register it with the modified admin
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+    # Define fieldsets for adding/editing users in the admin panel
+    fieldsets = (
+        (None, {"fields": ("username", "email", "password")}),
+        ("Personal Information", {"fields": ("phone_number", "address", "profile_picture", "country", "city", "role")}),
+        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        ("Important dates", {"fields": ("last_login", "updated_on")}),
+    )
+
+    # Define fields displayed when creating a new user
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("username", "email", "password1", "password2", "phone_number", "role", "is_active", "is_staff"),
+        }),
+    )
+
+    search_fields = ("username", "email", "phone_number")
+    ordering = ("id",)
+
+# Register the new UserModel with custom admin settings
+admin.site.register(UserModel, CustomUserAdmin)

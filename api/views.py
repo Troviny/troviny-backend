@@ -5,92 +5,90 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .serializers import LoginSerializer, RegisterSerializer, UserProfileSerializer
-from api.models import UserProfile
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 
-# Get custom User model
+# Get the custom User model
 User = get_user_model()
 
 # Generate JWT Token
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
     }
 
 @swagger_auto_schema(
     method="post",
     request_body=RegisterSerializer,
     responses={201: "User registered successfully", 400: "Username or Email already taken"},
-    tags=["Auth"]
+    tags=["Auth"],
 )
-@api_view(['POST'])
+@api_view(["POST"])
 def register(request):
     """User Registration"""
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
         tokens = get_tokens_for_user(user)
-        return Response({'data': UserProfileSerializer(user.userprofile).data, 'tokens': tokens}, status=201)
+        return Response({"data": UserSerializer(user).data, "tokens": tokens}, status=201)
     return Response(serializer.errors, status=400)
 
 @swagger_auto_schema(
     method="post",
     request_body=LoginSerializer,
     responses={200: "Login Successful", 400: "Invalid Credentials"},
-    tags=["Auth"]
+    tags=["Auth"],
 )
-@api_view(['POST'])
+@api_view(["POST"])
 def login(request):
     """User Login"""
     serializer = LoginSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         user = serializer.validated_data["user"]
         tokens = get_tokens_for_user(user)
-        return Response({"user": UserProfileSerializer(user).data, "tokens": tokens}, status=200)
+        return Response({"user": UserSerializer(user).data, "tokens": tokens}, status=200)
 
     return Response(serializer.errors, status=400)
-
 
 @swagger_auto_schema(
     method="post",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'refresh_token': openapi.Schema(type=openapi.TYPE_STRING, description='Refresh token to blacklist'),
+            "refresh_token": openapi.Schema(type=openapi.TYPE_STRING, description="Refresh token to blacklist"),
         },
-        required=['refresh_token']
+        required=["refresh_token"],
     ),
     responses={200: "Logged out successfully", 400: "Invalid token"},
-    tags=["Auth"]
+    tags=["Auth"],
 )
-@api_view(['POST'])
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout(request):
     """User Logout"""
-    refresh_token = request.data.get('refresh_token')
+    refresh_token = request.data.get("refresh_token")
     if not refresh_token:
-        return Response({'error': 'Refresh token is required'}, status=400)
-    
+        return Response({"error": "Refresh token is required"}, status=400)
+
     try:
         token = RefreshToken(refresh_token)
         token.blacklist()
-        return Response({'message': 'Logged out successfully'}, status=200)
+        return Response({"message": "Logged out successfully"}, status=200)
     except Exception as e:
-        return Response({'error': str(e)}, status=400)
+        return Response({"error": str(e)}, status=400)
 
 @swagger_auto_schema(
     method="get",
-    responses={200: UserProfileSerializer},
-    tags=["User"]
+    responses={200: UserSerializer},
+    tags=["User"],
 )
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_current_user_profile(request):
     """Get the authenticated user's profile"""
-    return Response(UserProfileSerializer(request.user.userprofile).data, status=200)
+    return Response(UserSerializer(request.user).data, status=200)
 
 @swagger_auto_schema(
     method="get",
@@ -102,28 +100,28 @@ def get_current_user_profile(request):
             type=openapi.TYPE_INTEGER,
         )
     ],
-    responses={200: UserProfileSerializer, 404: "User not found"},
-    tags=["User"]
+    responses={200: UserSerializer, 404: "User not found"},
+    tags=["User"],
 )
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_single_user_profile(request, user_id=None):
     """Retrieve a single user profile"""
     try:
-        user_profile = UserProfile.objects.get(user__id=user_id) if user_id else request.user.userprofile
-    except UserProfile.DoesNotExist:
+        user = User.objects.get(id=user_id) if user_id else request.user
+    except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
-    
-    return Response(UserProfileSerializer(user_profile).data, status=200)
+
+    return Response(UserSerializer(user).data, status=200)
 
 @swagger_auto_schema(
     method="get",
-    responses={200: UserProfileSerializer(many=True)},
-    tags=["User"]
+    responses={200: UserSerializer(many=True)},
+    tags=["User"],
 )
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_all_users(request):
     """Retrieve all users"""
-    users = UserProfile.objects.all()
-    return Response(UserProfileSerializer(users, many=True).data, status=200)
+    users = User.objects.all()
+    return Response(UserSerializer(users, many=True).data, status=200)
