@@ -48,7 +48,7 @@ def login(request):
     if serializer.is_valid():
         user = serializer.validated_data["user"]
         tokens = get_tokens_for_user(user)
-        return Response({"user": UserSerializer(user).data, "tokens": tokens}, status=200)
+        return Response({"user_id": user.id, "tokens": tokens}, status=200)
 
     return Response(serializer.errors, status=400)
 
