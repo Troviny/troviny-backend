@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    "corsheaders"
 ]
 
 REST_FRAMEWORK = {
@@ -170,3 +171,16 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:56419",  # Your Flutter web app
+    # "https://your-production-frontend.com"  # Add your actual domain
+]
+
+CORS_ALLOW_HEADERS = [
+    "content-type",
+    "authorization",
+    "access-control-allow-origin",
+]
+
+CORS_ALLOW_CREDENTIALS = True
